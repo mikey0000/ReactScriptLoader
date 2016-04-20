@@ -1,3 +1,4 @@
+import React from 'react';
 
 // A dictionary mapping script URLs to a dictionary mapping
 // component key to component for all components that are waiting
@@ -96,7 +97,7 @@ var ReactScriptLoader = {
         			}, 0);
       			}
     		};
-		
+
 		document.body.appendChild(script);
 	},
 	componentWillUnmount: function(key, scriptURL) {
@@ -139,5 +140,51 @@ var ReactScriptLoaderMixin = {
 	},
 };
 
+var ReactScriptLoaderComponent = (ComposedComponent, ScriptURL) => class extends React.Component {
+	constructor(props) {
+		super(props);
+
+		this.state = {
+			scriptStatus: 'waiting'
+		};
+	}
+
+	componentDidMount() {
+		ReactScriptLoader.componentDidMount(this.__getScriptLoaderID(), this, ScriptURL);
+	}
+
+	componentWillUnmount() {
+		ReactScriptLoader.componentWillUnmount(this.__getScriptLoaderID(), ScriptURL);
+	}
+
+	onScriptLoaded() {
+		console.log('onScriptLoaded');
+		this.setState({
+			scriptStatus: 'loaded'
+		});
+	}
+
+	onScriptError() {
+		console.log('onScriptError');
+
+		this.setState({
+			scriptStatus: 'error'
+		});
+	}
+
+	__getScriptLoaderID() {
+		if (typeof ComposedComponent.__reactScriptLoaderID === 'undefined') {
+			ComposedComponent.__reactScriptLoaderID = 'id' + idCount++;
+		}
+
+		return this.__reactScriptLoaderID;
+	}
+
+	render() {
+		return <ComposedComponent {...this.props} {...this.state} />
+	}
+};
+
 exports.ReactScriptLoaderMixin = ReactScriptLoaderMixin;
 exports.ReactScriptLoader = ReactScriptLoader;
+exports.ReactScriptLoaderComponent = ReactScriptLoaderComponent;
